@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block body_class %}pokedex-page{% endblock %}
+
+{% block title %}Pokédex{% endblock %}
+
+{% block content %}
+<div class="pokedex-container">
+    <div class="pokedex-header">
+        <a href="{{ url_for('index') }}" class="btn-back-home">← Voltar</a>
+        <h1>Pokédex</h1>
+        <div></div>
+    </div>
+
+    <p class="pokedex-info">Mostrando {{ pokemons|length }} de {{ total }} Pokémons (Página {{ page }} de {{ total_pages
+        }})</p>
+
+    <div class="pokemon-grid-large">
+        {% for pokemon in pokemons %}
+        <div class="pokemon-card-large" data-url="{{ url_for('pokemon_detail', name_or_id=pokemon.name) }}">
+            <div class="pokemon-artwork">
+                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ pokemon.url.split('/')[-2] }}.png"
+                    alt="{{ pokemon.name }}" loading="lazy">
+            </div>
+            <div class="pokemon-info">
+                <span class="pokemon-id">#{{ pokemon.url.split('/')[-2] }}</span>
+                <h3>{{ pokemon.name|capitalize }}</h3>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="pagination">
+        {% if page > 1 %}
+        <a href="{{ url_for('pokedex', page=page-1) }}" class="page-btn">← Anterior</a>
+        {% endif %}
+
+        <span class="page-info">Página {{ page }} de {{ total_pages }}</span>
+
+        {% if page < total_pages %} <a href="{{ url_for('pokedex', page=page+1) }}" class="page-btn">Próxima →</a>
+            {% endif %}
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.pokemon-card-large').forEach(card => {
+        card.addEventListener('click', () => {
+            window.location.href = card.dataset.url;
+        });
+    });
+</script>
+{% endblock %}

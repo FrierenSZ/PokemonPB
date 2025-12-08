@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+
+{% block body_class %}pokemon-detail-page{% endblock %}
+
+{% block title %}{{ pokemon.name|capitalize }} - Detalhes{% endblock %}
+
+{% macro render_evolution(evo) %}
+<div class="evo-stage">
+    <div class="evo-card">
+        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ evo.url.split('/')[-2] }}.png"
+            alt="{{ evo.name }}">
+        <p><a href="{{ url_for('pokemon_detail', name_or_id=evo.name) }}">{{ evo.name|capitalize }}</a></p>
+    </div>
+    {% if evo.evolves_to %}
+    <span class="evo-arrow">→</span>
+    {% for next_evo in evo.evolves_to %}
+    {{ render_evolution(next_evo) }}
+    {% endfor %}
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="pokemon-detail-wrapper">
+    <div class="pokemon-detail-header" data-type="{{ pokemon.types[0] }}">
+        <div class="header-content">
+            <a href="{{ url_for('pokedex') }}" class="btn-back-detail">← Voltar</a>
+            <h1 class="pokemon-name">{{ pokemon.name|capitalize }}</h1>
+            <span class="pokemon-number">#{{ '%04d'|format(pokemon.id) }}</span>
+        </div>
+
+        <div class="pokemon-showcase">
+            <img id="main-artwork" src="{{ pokemon.sprites.artwork_default }}" alt="{{ pokemon.name }}">
+            <label class="shiny-toggle">
+                <input type="checkbox" id="shiny-toggle" onchange="toggleShiny()">
+                <span>✨ Shiny</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="pokemon-detail-content">
+        {% if species and species.flavor_text %}
+        <div class="pokemon-description">
+            <p>{{ species.flavor_text }}</p>
+            {% if species.genera %}
+            <span class="pokemon-category">{{ species.genera }}</span>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="info-grid">
+            <div class="info-column">
+                <div class="info-section">
+                    <h3>Tipo</h3>
+                    <div class="type-list">
+                        {% for type in pokemon.types %}
+                        <span class="type-badge type-{{ type }}">{{ type|capitalize }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>Características</h3>
+                    <div class="characteristics">
+                        <div class="char-item">
+                            <span class="char-label">Altura:</span>
+                            <span class="char-value">{{ (pokemon.height / 10)|round(1) }}m</span>
+                        </div>
+                        <div class="char-item">
+                            <span class="char-label">Peso:</span>
+                            <span class="char-value">{{ (pokemon.weight / 10)|round(1) }}kg</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>Habilidades</h3>
+                    <div class="abilities-list">
+                        {% for ability in abilities %}
+                        <div class="ability-item" title="{{ ability.description }}">
+                            <span class="ability-name">{{ ability.name|replace('-', ' ')|capitalize }}</span>
+                            <span class="ability-desc">{{ ability.description }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-column">
+                <div class="info-section">
+                    <h3>Estatísticas Base</h3>
+                    <div class="stats-list">
+                        {% for stat, value in pokemon.stats.items() %}
+                        <div class="stat-item">
+                            <span class="stat-label">{{ stat|replace('-', ' ')|upper }}</span>
+                            <div class="stat-bar-container">
+                                <div class="stat-bar" data-value="{{ value }}" data-type="{{ pokemon.types[0] }}">
+                                    <span class="stat-value">{{ value }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if evolution_chain %}
+        <div class="evolution-section-new">
+            <h3>Evoluções</h3>
+            <div class="evolution-chain-new">
+                {{ render_evolution(evolution_chain) }}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="moves-section">
+            <details open>
+                <summary>
+                    <h3>Ataques (<span id="move-count">{{ pokemon.moves|length }}</span>)</h3>
+                </summary>
+
+                <div class="moves-search">
+                    <input type="text" id="move-search" placeholder="🔍 Buscar ataque..." autocomplete="off">
+                </div>
+
+                <div class="moves-grid" id="moves-container">
+                    {% for move in pokemon.moves %}
+                    <div class="move-card" data-move-name="{{ move.name }}"
+                        data-move-display="{{ move.name|replace('-', ' ')|capitalize }}">
+                        <div class="move-name">{{ move.name|replace('-', ' ')|capitalize }}</div>
+                        <span class="move-type-name"></span>
+                        <div class="move-tooltip">
+                            <div class="loading">Carregando...</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </details>
+        </div>
+    </div>
+</div>
+
+<script>
+    const sprites = {
+        default: {
+            artwork: "{{ pokemon.sprites.artwork_default }}"
+        },
+        shiny: {
+            artwork: "{{ pokemon.sprites.artwork_shiny }}"
+        }
+    };
+
+    function toggleShiny() {
+        const isShiny = document.getElementById('shiny-toggle').checked;
+        const artwork = isShiny ? sprites.shiny.artwork : sprites.default.artwork;
+        document.getElementById('main-artwork').src = artwork;
+    }
+
+    const moveCache = {};
+    const moveTypeCache = {};
+
+    function loadCacheFromStorage() {
+        try {
+            const storedMoves = localStorage.getItem('moveCache');
+            const storedTypes = localStorage.getItem('moveTypeCache');
+            if (storedMoves) Object.assign(moveCache, JSON.parse(storedMoves));
+            if (storedTypes) Object.assign(moveTypeCache, JSON.parse(storedTypes));
+        } catch (e) {
+            console.error('Erro ao carregar cache:', e);
+        }
+    }
+
+    function saveCacheToStorage() {
+        try {
+            localStorage.setItem('moveCache', JSON.stringify(moveCache));
+            localStorage.setItem('moveTypeCache', JSON.stringify(moveTypeCache));
+        } catch (e) {
+            console.error('Erro ao salvar cache:', e);
+        }
+    }
+
+    loadCacheFromStorage();
+
+    const searchInput = document.getElementById('move-search');
+    const moveCount = document.getElementById('move-count');
+
+
+    searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const cards = document.querySelectorAll('.move-card');
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const moveName = card.dataset.moveDisplay.toLowerCase();
+            if (moveName.includes(searchTerm)) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        moveCount.textContent = visibleCount;
+    });
+
+    const typeColors = {
+        'normal': '#A8A77A',
+        'fire': '#EE8130',
+        'water': '#6390F0',
+        'electric': '#F7D02C',
+        'grass': '#7AC74C',
+        'ice': '#96D9D6',
+        'fighting': '#C22E28',
+        'poison': '#A33EA1',
+        'ground': '#E2BF65',
+        'flying': '#A98FF3',
+        'psychic': '#F95587',
+        'bug': '#A6B91A',
+        'rock': '#B6A136',
+        'ghost': '#735797',
+        'dragon': '#6F35FC',
+        'dark': '#705746',
+        'steel': '#B7B7CE',
+        'fairy': '#D685AD'
+    };
+
+    function applyTypeInfo(card, type) {
+        const typeColor = typeColors[type] || '#777';
+        card.style.background = `linear-gradient(135deg, ${typeColor} 0%, ${typeColor}CC 100%)`;
+        card.style.borderColor = typeColor;
+        card.classList.add('type-loaded');
+
+        const typeNameEl = card.querySelector('.move-type-name');
+        if (typeNameEl) {
+            typeNameEl.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+        }
+    }
+
+    document.querySelectorAll('.move-card').forEach(card => {
+        const moveName = card.dataset.moveName;
+        const tooltip = card.querySelector('.move-tooltip');
+        let openTimeout = null;
+        let closeTimeout = null;
+
+        if (moveTypeCache[moveName]) {
+            applyTypeInfo(card, moveTypeCache[moveName]);
+        }
+
+        const showTooltip = async () => {
+            if (closeTimeout) {
+                clearTimeout(closeTimeout);
+                closeTimeout = null;
+            }
+
+            if (tooltip.classList.contains('active')) return;
+
+            if (moveCache[moveName]) {
+                tooltip.innerHTML = moveCache[moveName];
+                if (moveTypeCache[moveName]) {
+                    applyTypeInfo(card, moveTypeCache[moveName]);
+                }
+                tooltip.classList.add('active');
+                return;
+            }
+
+            if (tooltip.classList.contains('loading-active')) return;
+            tooltip.classList.add('loading-active');
+
+            try {
+                const response = await fetch(`/api/move/${moveName}`);
+                const move = await response.json();
+
+                if (move.error) {
+                    tooltip.innerHTML = '<div class="error">Erro ao carregar</div>';
+                    return;
+                }
+
+                moveTypeCache[moveName] = move.type;
+                applyTypeInfo(card, move.type);
+
+                const html = `
+                    <div class="tooltip-header">
+                        <span class="type-badge type-${move.type}">${move.type.charAt(0).toUpperCase() + move.type.slice(1)}</span>
+                        <span class="damage-class">${move.damage_class.charAt(0).toUpperCase() + move.damage_class.slice(1)}</span>
+                    </div>
+                    <div class="tooltip-stats">
+                        <span><strong>Poder:</strong> ${move.power || '-'}</span>
+                        <span><strong>Precisão:</strong> ${move.accuracy || '-'}%</span>
+                        <span><strong>PP:</strong> ${move.pp}</span>
+                    </div>
+                    <div class="tooltip-effect">
+                        ${move.effect}
+                    </div>
+                `;
+
+                moveCache[moveName] = html;
+                saveCacheToStorage();
+
+                tooltip.innerHTML = html;
+                tooltip.classList.remove('loading-active');
+                tooltip.classList.add('active');
+            } catch (error) {
+                console.error('Erro ao carregar move:', error);
+                tooltip.innerHTML = '<div class="error">Erro ao carregar</div>';
+                tooltip.classList.remove('loading-active');
+            }
+        };
+
+        const hideTooltip = () => {
+            if (openTimeout) {
+                clearTimeout(openTimeout);
+                openTimeout = null;
+            }
+
+            closeTimeout = setTimeout(() => {
+                tooltip.classList.remove('active');
+            }, 1500);
+        };
+
+        card.addEventListener('mouseenter', () => {
+            if (closeTimeout) {
+                clearTimeout(closeTimeout);
+                closeTimeout = null;
+            }
+
+            if (!tooltip.classList.contains('active')) {
+                openTimeout = setTimeout(showTooltip, 1500);
+            }
+        });
+
+        card.addEventListener('mouseleave', () => {
+            if (openTimeout) {
+                clearTimeout(openTimeout);
+                openTimeout = null;
+            }
+            hideTooltip();
+        });
+
+        tooltip.addEventListener('mouseenter', () => {
+            if (closeTimeout) {
+                clearTimeout(closeTimeout);
+                closeTimeout = null;
+            }
+        });
+
+        tooltip.addEventListener('mouseleave', () => {
+            hideTooltip();
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.stat-bar').forEach(bar => {
+            const value = parseInt(bar.dataset.value);
+            const percentage = Math.min((value / 255) * 100, 100);
+            setTimeout(() => {
+                bar.style.width = percentage + '%';
+            }, 100);
+        });
+
+        const header = document.querySelector('.pokemon-detail-header');
+        const type = header.dataset.type;
+        console.log('Tipo do Pokémon:', type);
+        console.log('Classe aplicada:', 'type-' + type);
+        header.classList.add('type-' + type);
+    });
+</script>
+{% endblock %}
