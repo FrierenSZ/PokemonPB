@@ -207,7 +207,7 @@
 </div>
 
 <style>
-/* CSS styles for varieties grid (mantido) */
+
 .varieties-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -258,7 +258,7 @@
 }
 
 
-/* Fallback styles */
+
 .variety-card.simple img {
     width: 80px;
     height: 80px;
@@ -266,7 +266,7 @@
 </style>
 
 <script>
-    // === SWAP DE ABAS ===
+
     const navBtns = document.querySelectorAll('.nav-btn');
     const tabContents = document.querySelectorAll('.tab-content');
 
@@ -285,7 +285,7 @@
         });
     });
 
-    // === SHINY TOGGLE ===
+
     const sprites = {
         default: { artwork: "{{ pokemon.sprites.artwork_default }}" },
         shiny: { artwork: "{{ pokemon.sprites.artwork_shiny }}" }
@@ -297,7 +297,7 @@
         document.getElementById('main-artwork').src = artwork;
     }
 
-    // === MOVES SYSTEM ===
+
     const movesData = JSON.parse('{{ pokemon.moves | tojson | safe }}');
     let movesLoaded = false;
     const movesContainer = document.getElementById('moves-container');

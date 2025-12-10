@@ -6,7 +6,7 @@ from services.pokeapi import (
     get_pokemon_species, 
     get_evolution_chain, 
     get_ability_description,
-    get_pokemon_varieties_details, # Importado a nova função
+    get_pokemon_varieties_details, 
     get_move_details
 )
 from services.translator import translate_to_portuguese
@@ -68,7 +68,7 @@ def calculate_stats_range(stats_data):
             min_val = int((2 * base + 5) * 0.9)
             max_val = int((2 * base + 99) * 1.1)
             
-        # Define cor baseada no valor
+        
         if base < 60:
             color = '#ff4e4e'      # Vermelho
         elif base < 90:
@@ -118,10 +118,10 @@ def pokemon_detail(name_or_id):
         except:
             pass 
 
-    # --- NOVO: BUSCAR E PASSAR VARIANTES (MEGAS, ALOLAN, ETC.) ---
-    # Usamos o ID do Pokemon principal para buscar todas as variedades associadas
+    # BUSCA E PASSAR VARIANTES (MEGAS, ALOLAN, ETC.) ---
+   
     varieties = get_pokemon_varieties_details(species['id']) 
-    # -----------------------------------------------------------------
+    
 
 
     return render_template('detail.html', 
@@ -129,7 +129,7 @@ def pokemon_detail(name_or_id):
                            species=species,
                            evolution_chain=evolution_chain,
                            abilities=abilities_with_desc,
-                           varieties=varieties) # <--- VARIÁVEL ADICIONADA
+                           varieties=varieties) 
 
 @app.route('/api/move/<move_name>')
 def get_move_info(move_name):
@@ -140,7 +140,7 @@ def get_move_info(move_name):
             try:
                 move_details['effect'] = translate_to_portuguese(move_details['effect'])
             except:
-                pass # Em caso de falha, mantém o efeito original
+                pass 
                 
         return jsonify(move_details)
     return jsonify({'error': 'Move not found'}), 404
