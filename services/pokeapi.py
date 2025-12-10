@@ -11,7 +11,7 @@ def get_pokemon_list(limit=20, offset=0):
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
-        print(f"Erro ao buscar lista de pokemons: {e}")
+        print(f"Erro: {e}")
         return None
 
 @lru_cache(maxsize=1)
@@ -27,7 +27,7 @@ def get_all_pokemon():
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
-        print(f"Erro ao buscar todos os pokemons: {e}")
+        print(f"Erro: {e}")
         return None
 
 @lru_cache(maxsize=128)
@@ -59,7 +59,7 @@ def get_pokemon_details(name_or_id):
         }
         return parsed_data
     except requests.RequestException as e:
-        print(f"Erro ao buscar detalhes do pokemon {name_or_id}: {e}")
+        print(f"Erro: {e}")
         return None
 
 @lru_cache(maxsize=128)
@@ -88,12 +88,35 @@ def get_pokemon_species(name_or_id):
             'flavor_text': flavor_text,
             'evolution_chain_url': data['evolution_chain']['url'] if data.get('evolution_chain') else None,
             'genera': next((g['genus'] for g in data['genera'] if g['language']['name'] == 'pt-BR'), 
-                          next((g['genus'] for g in data['genera'] if g['language']['name'] == 'en'), None))
+                           next((g['genus'] for g in data['genera'] if g['language']['name'] == 'en'), None)),
+            'varieties': data.get('varieties', [])
         }
         return parsed_data
     except requests.RequestException as e:
-        print(f"Erro ao buscar species do pokemon {name_or_id}: {e}")
+        print(f"Erro: {e}")
         return None
+
+@lru_cache(maxsize=64)
+def get_pokemon_varieties_details(name_or_id):
+    species_data = get_pokemon_species(name_or_id)
+    if not species_data or not species_data.get('varieties'):
+        return []
+
+    varieties_details = []
+    base_name = species_data['name']
+
+    for variety in species_data['varieties']:
+        if not variety['is_default']:
+            variety_name = variety['pokemon']['name']
+            details = get_pokemon_details(variety_name)
+            if details:
+                readable_name = variety_name.replace(base_name, '').replace('-', ' ').strip().title()
+                if not readable_name:
+                    readable_name = "Alternative Form"
+                details['form_name'] = readable_name
+                varieties_details.append(details)
+    
+    return varieties_details
 
 @lru_cache(maxsize=128)
 def get_evolution_chain(chain_url):
@@ -119,7 +142,7 @@ def get_evolution_chain(chain_url):
         
         return extract_chain(data['chain'])
     except requests.RequestException as e:
-        print(f"Erro ao buscar cadeia evolutiva: {e}")
+        print(f"Erro: {e}")
         return None
 
 @lru_cache(maxsize=256)
@@ -141,7 +164,7 @@ def get_ability_description(ability_name):
             'description': description or "Descrição não disponível"
         }
     except requests.RequestException as e:
-        print(f"Erro ao buscar habilidade {ability_name}: {e}")
+        print(f"Erro: {e}")
         return {'name': ability_name, 'description': "Descrição não disponível"}
 
 @lru_cache(maxsize=512)
@@ -170,5 +193,5 @@ def get_move_details(name_or_id):
         }
         return parsed_data
     except requests.RequestException as e:
-        print(f"Erro ao buscar move {name_or_id}: {e}")
+        print(f"Erro: {e}")
         return None

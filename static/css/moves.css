@@ -7,10 +7,10 @@
 
 .move-card {
     position: relative;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.151);
     padding: 12px 15px;
     border-radius: 10px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: 4px solid rgb(0, 0, 0);
     cursor: help;
     transition: all 0.2s ease;
     display: flex;
@@ -20,7 +20,7 @@
 
 .move-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 20px rgba(250, 248, 230, 0.849);
 }
 
 .move-name {
@@ -53,8 +53,8 @@
     border: 2px solid var(--primary-color);
     border-radius: 10px;
     padding: 15px;
-    min-width: 300px;
-    max-width: 350px;
+    min-width: 250px;
+    max-width: 550px;
     z-index: 1000;
     opacity: 0;
     visibility: hidden;
@@ -149,11 +149,11 @@
 }
 
 #move-search {
-    width: 100%;
-    padding: 12px 20px;
+    width: 350px;
+    padding: 12px 10px;
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 25px;
+    border-radius: 20px;
     color: white;
     font-size: 1rem;
     transition: all 0.3s ease;

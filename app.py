@@ -1,5 +1,15 @@
 from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO
+from services.pokeapi import (
+    get_all_pokemon, 
+    get_pokemon_details, 
+    get_pokemon_species, 
+    get_evolution_chain, 
+    get_ability_description,
+    get_pokemon_varieties_details, # Importado a nova função
+    get_move_details
+)
+from services.translator import translate_to_portuguese
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -11,8 +21,6 @@ def index():
 
 @app.route('/pokedex')
 def pokedex():
-    from services.pokeapi import get_all_pokemon
-    
     page = int(request.args.get('page', 1))
     per_page = 70
     
@@ -39,12 +47,18 @@ def pokedex():
         })
         
     return render_template('pokedex.html', 
-                         pokemons=page_items, 
-                         page=page, 
-                         total=total_items,
-                         total_pages=total_pages)
+                           pokemons=page_items, 
+                           page=page, 
+                           total=total_items,
+                           total_pages=total_pages)
 
-def calculate_stats_range(base_stats):
+def calculate_stats_range(stats_data):
+    # Converte lista da API para dicionário {nome: valor} se necessário
+    if isinstance(stats_data, list):
+        base_stats = {item['stat']['name']: item['base_stat'] for item in stats_data}
+    else:
+        base_stats = stats_data
+
     ranges = {}
     for stat, base in base_stats.items():
         if stat == 'hp':
@@ -63,14 +77,12 @@ def calculate_stats_range(base_stats):
             color = '#f1c40f'      # Amarelo
         else:
             color = '#6ab04c'      # Verde
-        
+            
         ranges[stat] = {'base': base, 'min': min_val, 'max': max_val, 'color': color}
     return ranges
 
 @app.route('/pokemon/<name_or_id>')
 def pokemon_detail(name_or_id):
-    from services.pokeapi import get_pokemon_details, get_pokemon_species, get_evolution_chain, get_ability_description
-    from services.translator import translate_to_portuguese
     
     pokemon = get_pokemon_details(name_or_id)
     if not pokemon:
@@ -79,7 +91,9 @@ def pokemon_detail(name_or_id):
     # Calcula Ranges de Stats
     pokemon['stats_ranges'] = calculate_stats_range(pokemon['stats'])
 
-    species = get_pokemon_species(name_or_id)
+    # Nota: Usamos name_or_id para Venusaur, mas get_pokemon_species também aceita o ID, 
+    # garantindo que formas alternativas (como venusaur-mega) ainda encontrem o species correto (venusaur).
+    species = get_pokemon_species(pokemon['id']) 
     
     evolution_chain = None
     if species and species.get('evolution_chain_url'):
@@ -88,7 +102,13 @@ def pokemon_detail(name_or_id):
     abilities_with_desc = []
     for ability_name in pokemon['abilities']:
         ability_data = get_ability_description(ability_name)
-        ability_data['description'] = translate_to_portuguese(ability_data['description'])
+        
+        # Tenta traduzir a descrição da habilidade
+        try:
+            ability_data['description'] = translate_to_portuguese(ability_data['description'])
+        except:
+            pass # Mantém em inglês se a tradução falhar
+            
         abilities_with_desc.append(ability_data)
         
     # Se a descrição (flavor_text) veio em inglês (fallback), traduzir para PT
@@ -98,30 +118,38 @@ def pokemon_detail(name_or_id):
         except:
             pass 
 
+    # --- NOVO: BUSCAR E PASSAR VARIANTES (MEGAS, ALOLAN, ETC.) ---
+    # Usamos o ID do Pokemon principal para buscar todas as variedades associadas
+    varieties = get_pokemon_varieties_details(species['id']) 
+    # -----------------------------------------------------------------
+
+
     return render_template('detail.html', 
-                         pokemon=pokemon, 
-                         species=species,
-                         evolution_chain=evolution_chain,
-                         abilities=abilities_with_desc)
+                           pokemon=pokemon, 
+                           species=species,
+                           evolution_chain=evolution_chain,
+                           abilities=abilities_with_desc,
+                           varieties=varieties) # <--- VARIÁVEL ADICIONADA
 
 @app.route('/api/move/<move_name>')
 def get_move_info(move_name):
-    from services.pokeapi import get_move_details
-    from services.translator import translate_to_portuguese
     
     move_details = get_move_details(move_name)
     if move_details:
         if move_details.get('effect'):
-            move_details['effect'] = translate_to_portuguese(move_details['effect'])
+            try:
+                move_details['effect'] = translate_to_portuguese(move_details['effect'])
+            except:
+                pass # Em caso de falha, mantém o efeito original
+                
         return jsonify(move_details)
     return jsonify({'error': 'Move not found'}), 404
 
 if __name__ == '__main__':
-    # Usando LiveReload para desenvolvimento rápido
-    # socketio.run(app, debug=True)
+    
     from livereload import Server
     server = Server(app.wsgi_app)
-    # Monitorar mudanças em templates e CSS
+
     server.watch('templates/*.html')
     server.watch('static/css/*.css')
     server.watch('static/js/*.js')

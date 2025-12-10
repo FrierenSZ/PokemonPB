@@ -8,7 +8,7 @@
 <div class="evo-stage">
     <div class="evo-card">
         <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ evo.url.split('/')[-2] }}.png"
-            alt="{{ evo.name }}">
+            alt="{{ evo.name }}" loading="lazy">
         <p><a href="{{ url_for('pokemon_detail', name_or_id=evo.name) }}">{{ evo.name|capitalize }}</a></p>
     </div>
     {% if evo.evolves_to %}
@@ -22,7 +22,6 @@
 
 {% block content %}
 <div class="pokemon-detail-wrapper">
-    <!-- Header -->
     <div class="pokemon-detail-header" data-type="{{ pokemon.types[0] }}">
         <div class="header-content">
             <a href="{{ url_for('pokedex') }}" class="btn-back-detail">← Voltar</a>
@@ -32,7 +31,6 @@
     </div>
 
     <div class="dashboard-container">
-        <!-- Sidebar Navigation -->
         <aside class="dashboard-sidebar">
             <nav class="sidebar-nav">
                 <button class="nav-btn active" data-tab="overview">
@@ -44,13 +42,10 @@
             </nav>
         </aside>
 
-        <!-- Main Content Area -->
         <main class="dashboard-content">
 
-            <!-- ABA: VISÃO GERAL (Inclui Evoluções e Megas) -->
             <section id="tab-overview" class="tab-content active">
                 <div class="overview-grid">
-                    <!-- Imagem Principal -->
                     <div class="showcase-area">
                         <div class="pokemon-showcase-large">
                             <img id="main-artwork" src="{{ pokemon.sprites.artwork_default }}" alt="{{ pokemon.name }}">
@@ -63,7 +58,6 @@
                             </div>
                         </div>
 
-                        <!-- Descrição Compacta -->
                         {% if species and species.flavor_text %}
                         <div class="pokemon-description-compact">
                             <p>"{{ species.flavor_text }}"</p>
@@ -71,9 +65,7 @@
                         {% endif %}
                     </div>
 
-                    <!-- Informações e Stats -->
                     <div class="data-area">
-                        <!-- Info Básica -->
                         <div class="info-card">
                             <h3>Dados Básicos</h3>
                             <div class="basic-data-grid">
@@ -105,11 +97,9 @@
                             </div>
                         </div>
 
-                        <!-- Stats -->
                         <div class="info-card stats-card">
                             <h3>Estatísticas Base</h3>
                             <div class="stats-table">
-                                <!-- Cabeçalho -->
                                 <div class="stat-row header">
                                     <span class="col-stat">Status</span>
                                     <span class="col-val">Base</span>
@@ -149,9 +139,7 @@
                     </div>
                 </div>
 
-                <!-- LINHA EVOLUTIVA & MEGAS -->
                 <div class="evolution-wrapper-overview" style="margin-top: 40px;">
-                    <!-- Cadeia Principal -->
                     {% if evolution_chain %}
                     <div class="evolution-container">
                         <h3>Linha Evolutiva</h3>
@@ -161,17 +149,36 @@
                     </div>
                     {% endif %}
 
-                    <!-- Formas Alternativas / Megas -->
-                    {% if species.varieties and species.varieties|length > 0 %}
-                    <div class="varieties-container" style="margin-top: 30px;">
+                    {% if varieties and varieties|length > 0 %}
+                    <div class="varieties-container" style="margin-top: 40px;">
                         <h3>Mega Evoluções & Formas Alternativas</h3>
                         <div class="varieties-grid">
+                            {% for form in varieties %}
+                            
+                            {% set form_name_clean = form.name|replace(pokemon.name, '')|replace('-', ' ')|trim|capitalize %}
+                            {% set form_image = form.sprites.artwork_default or form.sprites.front_default %}
+
+                            <a href="{{ url_for('pokemon_detail', name_or_id=form.name) }}" class="variety-card">
+                                <div class="variety-image-wrapper">
+                                    <img src="{{ form_image }}" alt="{{ form.name }}" loading="lazy">
+                                </div>
+                                <p class="variety-name">{{ form_name_clean }}</p>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% elif species.varieties and species.varieties|length > 0 %}
+                    <div class="varieties-container" style="margin-top: 40px;">
+                        <h3>Formas Alternativas</h3>
+                        <div class="varieties-grid">
                             {% for variety in species.varieties %}
-                            <div class="variety-card">
-                                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ variety.url.split('/')[-2] }}.png"
-                                    alt="{{ variety.name }}" loading="lazy">
-                                <p>{{ variety.name|replace(pokemon.name, '')|replace('-', ' ')|trim|capitalize }}</p>
-                            </div>
+                                {% if not variety.is_default %}
+                                <div class="variety-card simple">
+                                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ variety.pokemon.url.split('/')[-2] }}.png"
+                                         alt="{{ variety.pokemon.name }}" loading="lazy">
+                                    <p>{{ variety.pokemon.name|replace(pokemon.name, '')|replace('-', ' ')|trim|capitalize }}</p>
+                                </div>
+                                {% endif %}
                             {% endfor %}
                         </div>
                     </div>
@@ -179,7 +186,6 @@
                 </div>
             </section>
 
-            <!-- ABA: ATAQUES -->
             <section id="tab-moves" class="tab-content">
                 <div class="moves-header">
                     <h3>Ataques Disponíveis <span class="badge-count">{{ pokemon.moves|length }}</span></h3>
@@ -193,13 +199,71 @@
                 </div>
 
                 <div class="moves-grid" id="moves-container">
-                    <!-- Cards são injetados aqui via JS apenas no clique da aba -->
-                </div>
+                    </div>
             </section>
 
         </main>
     </div>
 </div>
+
+<style>
+/* CSS styles for varieties grid (mantido) */
+.varieties-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.variety-card {
+    background: #2a2a2a;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    transition: transform 0.2s, background 0.2s;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.variety-card:hover {
+    transform: translateY(-5px);
+    background: #333;
+    border-color: #555;
+}
+
+.variety-image-wrapper {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.variety-image-wrapper img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.variety-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: #eee;
+}
+
+
+/* Fallback styles */
+.variety-card.simple img {
+    width: 80px;
+    height: 80px;
+}
+</style>
 
 <script>
     // === SWAP DE ABAS ===
@@ -208,16 +272,13 @@
 
     navBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            // Remove active de todos
             navBtns.forEach(b => b.classList.remove('active'));
             tabContents.forEach(t => t.classList.remove('active'));
 
-            // Ativa o clicado
             btn.classList.add('active');
             const tabId = btn.dataset.tab;
             document.getElementById(`tab-${tabId}`).classList.add('active');
 
-            // Se for aba moves, carrega os moves se ainda não carregou
             if (tabId === 'moves' && !movesLoaded) {
                 loadMoves();
             }
@@ -237,17 +298,14 @@
     }
 
     // === MOVES SYSTEM ===
-    // Uso de aspas simples para acalmar o linter do editor
     const movesData = JSON.parse('{{ pokemon.moves | tojson | safe }}');
     let movesLoaded = false;
     const movesContainer = document.getElementById('moves-container');
     const moveSearch = document.getElementById('move-search');
 
-    // Cache simples
     const moveCache = {};
     const moveTypeCache = {};
 
-    // Load cache
     try {
         const sm = localStorage.getItem('moveCache');
         const st = localStorage.getItem('moveTypeCache');
@@ -268,7 +326,6 @@
         const loader = document.getElementById('moves-loader');
         loader.style.display = 'block';
 
-        // Renderiza a lista inicial
         setTimeout(() => {
             movesContainer.innerHTML = movesData.map(move => {
                 const displayName = move.name.replace(/-/g, ' ');
@@ -283,40 +340,26 @@
                 `;
             }).join('');
 
-            // Adiciona listeners de hover (para mostrar o tooltip que já pode estar carregado ou carregar na hora)
             setupMoveHoverEvents();
-
             loader.style.display = 'none';
             movesLoaded = true;
-
-            // INICIA O CARREGAMENTO EM BACKGROUND (BATCHES)
             fetchMovesInBatches(0);
         }, 50);
     }
 
-    // Carrega em lotes de 10 para não travar a rede
     const BATCH_SIZE = 10;
 
     async function fetchMovesInBatches(startIndex) {
-        if (startIndex >= movesData.length) return; // Acabou
-
+        if (startIndex >= movesData.length) return;
         const batch = movesData.slice(startIndex, startIndex + BATCH_SIZE);
-
-        // Cria array de Promises para esse lote
         const promises = batch.map(move => fetchMoveDetails(move.name));
-
-        // Espera esse lote terminar (ou pelo menos disparar)
-        // Usamos Promise.allSettled para garantir que erros não parem o processo
         await Promise.allSettled(promises);
-
-        // Chama o próximo lote com um pequeno respiro pro browser renderizar
         setTimeout(() => {
             fetchMovesInBatches(startIndex + BATCH_SIZE);
         }, 200);
     }
 
     async function fetchMoveDetails(moveName) {
-        // Se já tem no cache, atualiza a UI se necessário e retorna
         if (moveCache[moveName]) {
             updateCardUI(moveName, moveCache[moveName], moveTypeCache[moveName]);
             return;
@@ -325,10 +368,8 @@
         try {
             const res = await fetch(`/api/move/${moveName}`);
             const data = await res.json();
-
             if (data.error) return;
 
-            // Constroi HTML do tooltip
             const html = `
                 <div class="tooltip-header">
                     <span class="type-badge type-${data.type}">${data.type}</span>
@@ -342,14 +383,10 @@
                 <div class="tooltip-effect">${data.effect}</div>
             `;
 
-            // Salva Cache
             moveCache[moveName] = html;
             moveTypeCache[moveName] = data.type;
             saveCache();
-
-            // Atualiza UI
             updateCardUI(moveName, html, data.type);
-
         } catch (e) {
             console.error(`Erro ao carregar move ${moveName}`, e);
         }
@@ -367,30 +404,25 @@
         const card = document.getElementById(`card-${moveName}`);
         if (!card) return;
 
-        // Atualiza cores
         if (type) {
             const col = typeColors[type] || '#777';
             card.style.background = `linear-gradient(135deg, ${col} 0%, ${col}CC 100%)`;
             card.style.borderColor = col;
-
             const span = card.querySelector('.move-type-name');
             if (span) span.textContent = type.charAt(0).toUpperCase() + type.slice(1);
         }
 
-        // Atualiza Tooltip (invisível até hover)
         const tooltip = document.getElementById(`tooltip-${moveName}`);
         if (tooltip) {
             tooltip.innerHTML = tooltipHtml;
-            tooltip.classList.add('loaded'); // Marca como carregado
+            tooltip.classList.add('loaded');
         }
     }
 
     function setupMoveHoverEvents() {
         movesContainer.addEventListener('mouseover', (e) => {
-            // Delegação de eventos para performance
             const card = e.target.closest('.move-card');
             if (!card) return;
-
             const tooltip = card.querySelector('.move-tooltip');
             if (tooltip) tooltip.classList.add('active');
         });
@@ -398,13 +430,11 @@
         movesContainer.addEventListener('mouseout', (e) => {
             const card = e.target.closest('.move-card');
             if (!card) return;
-
             const tooltip = card.querySelector('.move-tooltip');
             if (tooltip) tooltip.classList.remove('active');
         });
     }
 
-    // === BUSCA ===
     moveSearch.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
         const cards = document.querySelectorAll('.move-card');
@@ -414,25 +444,17 @@
         });
     });
 
-    // === INITIAL SETUP ===
-    // === INITIAL SETUP ===
     document.addEventListener('DOMContentLoaded', () => {
-        // Stats animation & Coloring
         document.querySelectorAll('.stat-bar').forEach(bar => {
             const val = parseInt(bar.dataset.value);
-            const color = bar.dataset.color || '#ccc'; // Pega cor do HTML
-
-            // Aplica cor via JS (Editor fica feliz)
+            const color = bar.dataset.color || '#ccc';
             bar.style.setProperty('background-color', color, 'important');
             bar.style.boxShadow = `0 0 8px ${color}40`;
-
-            // Animação
             setTimeout(() => {
                 bar.style.width = Math.min((val / 255) * 100, 100) + '%';
             }, 100);
         });
 
-        // Header color
         const header = document.querySelector('.pokemon-detail-header');
         if (header) header.classList.add('type-' + header.dataset.type);
     });

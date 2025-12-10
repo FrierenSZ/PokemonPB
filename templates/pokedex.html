@@ -5,9 +5,10 @@
 {% block title %}Pokédex{% endblock %}
 
 {% block content %}
+
 <div class="pokedex-container">
+    <a href="{{ url_for('index') }}" class="btn-back-home">← Voltar</a>
     <div class="pokedex-header">
-        <a href="{{ url_for('index') }}" class="btn-back-home">← Voltar</a>
         <h1>Pokédex</h1>
         <div></div>
     </div>
