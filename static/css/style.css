@@ -1,3 +1,6 @@
+
+/* Global Styles */
+
 :root {
     --primary-color: #ffcb05;
     --secondary-color: #3b4cca;
@@ -647,15 +650,15 @@ main {
 }
 
 .type-normal {
-    background-color: #A8A77A;
+    background-color: #e2e2d0;
 }
 
 .type-fire {
-    background-color: #EE8130;
+    background-color: #eb7922;
 }
 
 .type-water {
-    background-color: #6390F0;
+    background-color: #5485f0;
 }
 
 .type-electric {
@@ -667,7 +670,7 @@ main {
 }
 
 .type-ice {
-    background-color: #96D9D6;
+    background-color: #88dad5;
 }
 
 .type-fighting {
@@ -683,11 +686,11 @@ main {
 }
 
 .type-flying {
-    background-color: #A98FF3;
+    background-color: #8bf3f7;
 }
 
 .type-psychic {
-    background-color: #F95587;
+    background-color: #be5deb;
 }
 
 .type-bug {
@@ -699,7 +702,7 @@ main {
 }
 
 .type-ghost {
-    background-color: #735797;
+    background-color: #705199;
 }
 
 .type-dragon {
@@ -707,20 +710,16 @@ main {
 }
 
 .type-steel {
-    background-color: #B7B7CE;
+    background-color: #aaaaca;
 }
 
 .type-fairy {
-    background-color: #D685AD;
+    background-color: #ffb8dc;
 }
 
-/* ========================================= */
-/* NOVO DESIGN DETAIL PAGE (COMPACTO & OTIMIZADO) */
-/* ========================================= */
 
 .pokemon-detail-wrapper {
     max-width: 1000px;
-    /* Reduced width */
     margin: 2rem auto;
     padding: 0 15px;
 }
@@ -749,7 +748,6 @@ main {
 .detail-grid {
     display: grid;
     grid-template-columns: 220px 1fr 1fr;
-    /* Image col narrower */
     gap: 15px;
     margin-bottom: 20px;
 }
@@ -767,7 +765,6 @@ main {
 
 .detail-card {
     background: rgba(20, 20, 20, 0.65);
-    /* Semi-transparent dark */
     backdrop-filter: blur(12px);
     padding: 15px;
     border-radius: 12px;
@@ -782,12 +779,10 @@ main {
     align-items: center;
     justify-content: center;
     background: rgba(0, 0, 0, 0.4);
-    /* Darker backdrop for image */
 }
 
 .pokemon-image-container img {
     max-width: 160px;
-    /* Smaller image */
     height: auto;
     filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1));
     transition: transform 0.3s ease;
@@ -918,7 +913,7 @@ main {
 
 .move-card:hover {
     background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.521);
 }
 
 .move-name {
@@ -964,10 +959,8 @@ main {
     transition: width 1s ease-out;
 }
 
-/* Tooltip Fixed */
 .move-tooltip {
     pointer-events: none;
-    /* Prevent flickering */
     position: absolute;
     bottom: 100%;
     left: 50%;

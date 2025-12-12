@@ -35,7 +35,6 @@ def pokedex():
     start = (page - 1) * per_page
     end = start + per_page
     
-    # Adiciona ID para facilitar a imagem
     page_items = []
     for p in pokemon_list[start:end]:
         p_id = p['url'].split('/')[-2]

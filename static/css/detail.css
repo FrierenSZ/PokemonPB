@@ -1,3 +1,5 @@
+/* Pokémon Details*/
+
 .pokemon-detail-wrapper {
     max-width: 1550px;
     margin: 0 auto;
@@ -79,7 +81,7 @@
 }
 
 .pokemon-detail-header.type-dark {
-    background: linear-gradient(135deg, #705746, #5A4632);
+    background: linear-gradient(135deg, #110d0b, #130e09);
 }
 
 .pokemon-detail-header.type-fairy {
