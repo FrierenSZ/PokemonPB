@@ -9,7 +9,7 @@
 }
 
 .chat-box-detail {
-    height: 480px; /* AUMENTADO: Mais alto para melhor experiência */
+    height: 480px; 
     padding: 20px;
     overflow-y: auto;
     display: flex;
@@ -41,7 +41,7 @@
     }
 }
 
-/* Mensagens do Usuário (Cor de Ação Padrão) */
+
 .user-message {
     align-self: flex-end;
     background-color: #6390F0; 
@@ -50,16 +50,16 @@
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
-/* Mensagens do Bot (Enfermeira Joy) - Cor Principal (Red/Pink) */
+
 .bot-message {
     align-self: flex-start;
-    background-color: #F95587; /* Cor rosa/psíquico da Joy */
+    background-color: #F95587; 
     color: white;
     border-top-left-radius: 4px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
-/* Estilo de Carregamento (Mais visual) */
+
 .bot-message.loading {
     background-color: #F7D02C;
     color: #333;
