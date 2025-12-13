@@ -28,7 +28,7 @@ A Enfermeira Joy está pronta para ajudar com decisões estratégicas, utilizand
 | Componente | Tecnologia | Uso no Projeto |
 | :--- | :--- | :--- |
 | **Backend** | Python, Flask, Jinja2 | Roteamento, lógica de aplicação e renderização de templates. |
-| **IA Core** | Google Gemini API (`2.5-flash-lite`) | Motor de chat e inteligência estratégica da Enfermeira Joy. |
+| **IA Core** | Google Gemini API (`2.0-flash-lite`) | Motor de chat e inteligência estratégica da Enfermeira Joy. |
 | **Segurança** | `python-dotenv` | Carregamento seguro da chave de API (`GEMINI_API_KEY`) via arquivo `.env`. |
 | **Deploy** | `gunicorn` | Servidor HTTP robusto, usado para rodar a aplicação em produção (Render). |
 | **Dados** | PokéAPI | Fonte de dados principal para todas as informações de Pokémon. |
@@ -59,6 +59,15 @@ Estamos trabalhando duro para trazer a verdadeira batalha para o navegador!
 - **Comunicação Real-Time**: Flask-SocketIO (Preparado para o futuro)
 
 ---
+
+## ✅ Rodar o Projeto Localmente
+
+- **Instalar Python 3.14.* ***: Instale a versão do python 3.14+
+- **Crie um ambiente virtual**: Evite que outros pacotes instalados na sua máquina atrapalhem no codigo execute ''python -m venv venv'' ou ''py -m venv venv'' no terminal do projeto. 
+- **Ative o Script**: Use venv\Scripts\activate no terminal para ativar, em seguida use pip install -r requirements.txt (Caso você retire ou atualize uma nova biblioteca, utilize o comando pip freeze > requirements.txt) esse comando irá atualizar as dependencias do projeto
+- **Rode o projeto**: Divirta-se! 😅 
+
+- **EXTRA**: Caso você queira usar a enfermeira joy, você precisa de uma api do goggle studio e uma conta maior de 18 anos, acesse [Goggle-Studio](https://aistudio.google.com/api-keys) selecione o plano free e crie uma api key, crie um arquivo .env e coloque sua api key GEMINI_API_KEY = (SUA_API_KEY) (Cuidado com os limites dos modelos!)
 
 <p align="center">
   Desenvolvido Por @FrierenSZ_ para fãs de Pokémon.
