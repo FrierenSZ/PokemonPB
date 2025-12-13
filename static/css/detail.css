@@ -601,6 +601,12 @@
     background: rgba(60, 60, 60, 0.9);
 }
 
+.move-card.type-z-move:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); 
+    border-color: #FFD700;
+}
+
 .move-name {
     font-size: 0.85rem;
     color: #eee;
@@ -666,7 +672,43 @@
     line-height: 1.4;
 }
 
-/* Novo Media Query para Tablets (larguras menores que 1100px) */
+
+
+.moves-filters {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.moves-filters select {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px 15px;
+    border-radius: 20px;
+    color: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    appearance: none; 
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%20227.9L146.2%2087.1l-140.8%20140.8h281.6z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 10px top 50%;
+    background-size: 0.65em auto;
+}
+
+.moves-filters select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.moves-filters option {
+    background: #111; 
+    color: #fff;
+}
+
+
 @media (max-width: 1100px) {
     .overview-grid {
         grid-template-columns: 1fr;

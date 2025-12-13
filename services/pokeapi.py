@@ -1,9 +1,12 @@
+import os
+from flask import app, json, jsonify, request
 import requests
 from functools import lru_cache
+from concurrent.futures import ThreadPoolExecutor, as_completed 
 
 BASE_URL = "https://pokeapi.co/api/v2"
 
-@lru_cache(maxsize=256)
+@lru_cache(maxsize=1500)
 def get_pokemon_list(limit=20, offset=0):
     try:
         url = f"{BASE_URL}/pokemon?limit={limit}&offset={offset}"
@@ -14,7 +17,7 @@ def get_pokemon_list(limit=20, offset=0):
         print(f"Erro: {e}")
         return None
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=600)
 def get_all_pokemon():
     try:
         url = f"{BASE_URL}/pokemon?limit=1"
@@ -30,13 +33,17 @@ def get_all_pokemon():
         print(f"Erro: {e}")
         return None
 
-@lru_cache(maxsize=128)
+@lru_cache(maxsize=1000)
 def get_pokemon_details(name_or_id):
     try:
         url = f"{BASE_URL}/pokemon/{name_or_id}/"
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
+        
+
+        moves_list = [{'name': m['move']['name'], 'url': m['move']['url']} 
+             for m in data.get('moves', [])]
         
         parsed_data = {
             'id': data['id'],
@@ -46,7 +53,7 @@ def get_pokemon_details(name_or_id):
             'types': [t['type']['name'] for t in data['types']],
             'stats': {s['stat']['name']: s['base_stat'] for s in data['stats']},
             'abilities': [a['ability']['name'] for a in data['abilities']],
-            'moves': [{'name': m['move']['name'], 'url': m['move']['url']} for m in data['moves']],
+            'moves': moves_list, 
             'sprites': {
                 'front_default': data['sprites']['front_default'],
                 'front_shiny': data['sprites']['front_shiny'],
@@ -59,10 +66,10 @@ def get_pokemon_details(name_or_id):
         }
         return parsed_data
     except requests.RequestException as e:
-        print(f"Erro: {e}")
+        print(f"Erro ao buscar detalhes do Pokémon {name_or_id}: {e}")
         return None
 
-@lru_cache(maxsize=128)
+@lru_cache(maxsize=800)
 def get_pokemon_species(name_or_id):
     try:
         url = f"{BASE_URL}/pokemon-species/{name_or_id}/"
@@ -88,7 +95,7 @@ def get_pokemon_species(name_or_id):
             'flavor_text': flavor_text,
             'evolution_chain_url': data['evolution_chain']['url'] if data.get('evolution_chain') else None,
             'genera': next((g['genus'] for g in data['genera'] if g['language']['name'] == 'pt-BR'), 
-                           next((g['genus'] for g in data['genera'] if g['language']['name'] == 'en'), None)),
+                             next((g['genus'] for g in data['genera'] if g['language']['name'] == 'en'), None)),
             'varieties': data.get('varieties', [])
         }
         return parsed_data
@@ -96,7 +103,7 @@ def get_pokemon_species(name_or_id):
         print(f"Erro: {e}")
         return None
 
-@lru_cache(maxsize=64)
+@lru_cache(maxsize=800)
 def get_pokemon_varieties_details(name_or_id):
     species_data = get_pokemon_species(name_or_id)
     if not species_data or not species_data.get('varieties'):
@@ -118,7 +125,24 @@ def get_pokemon_varieties_details(name_or_id):
     
     return varieties_details
 
-@lru_cache(maxsize=128)
+@lru_cache(maxsize=1) 
+def get_generic_z_moves_local():
+    current_dir = os.path.dirname(__file__)
+    file_path = os.path.join(current_dir, 'zmoves.json')
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            print(f"✅ Z-Moves genéricos carregados com sucesso do arquivo: {file_path}")
+            return data
+    except FileNotFoundError:
+        print(f"❌ ERRO: Arquivo zmoves.json não encontrado em: {file_path}")
+        return []
+    except json.JSONDecodeError as e:
+        print(f"❌ ERRO ao decodificar zmoves.json: {e}")
+        return []
+
+@lru_cache(maxsize=800)
 def get_evolution_chain(chain_url):
     try:
         response = requests.get(chain_url)
@@ -145,7 +169,7 @@ def get_evolution_chain(chain_url):
         print(f"Erro: {e}")
         return None
 
-@lru_cache(maxsize=256)
+@lru_cache(maxsize=800)
 def get_ability_description(ability_name):
     try:
         url = f"{BASE_URL}/ability/{ability_name}/"
@@ -167,7 +191,7 @@ def get_ability_description(ability_name):
         print(f"Erro: {e}")
         return {'name': ability_name, 'description': "Descrição não disponível"}
 
-@lru_cache(maxsize=512)
+@lru_cache(maxsize=1000)
 def get_move_details(name_or_id):
     try:
         url = f"{BASE_URL}/move/{name_or_id}/"
@@ -195,3 +219,54 @@ def get_move_details(name_or_id):
     except requests.RequestException as e:
         print(f"Erro: {e}")
         return None
+
+
+MAX_CONCURRENT_REQUESTS = 20 
+
+def get_abilities_details_in_parallel(ability_names, translator_func=None):
+
+    abilities_with_desc = []
+    
+    with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_REQUESTS) as executor:
+
+        future_to_ability = {
+            executor.submit(get_ability_description, name): name 
+            for name in ability_names
+        }
+        
+        for future in as_completed(future_to_ability):
+            ability_data = future.result()
+            
+            if ability_data and ability_data.get('description') and translator_func:
+                try:
+                    ability_data['description'] = translator_func(ability_data['description'])
+                except Exception:
+                    pass
+            
+            abilities_with_desc.append(ability_data)
+            
+    return abilities_with_desc
+
+def get_moves_details_in_parallel(move_list, translator_func=None):
+
+    move_details_list = []
+    move_names = [move['name'] for move in move_list]
+    with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_REQUESTS) as executor:
+        future_to_move = {
+            executor.submit(get_move_details, name): name 
+            for name in move_names 
+        }
+        
+        for future in as_completed(future_to_move):
+            move_data = future.result()
+            
+            if move_data and move_data.get('effect') and translator_func:
+                try:
+                    move_data['effect'] = translator_func(move_data['effect'])
+                except Exception:
+                    pass
+            
+            if move_data:
+                move_details_list.append(move_data)
+                
+    return move_details_list

@@ -17,8 +17,12 @@
         }})</p>
 
     <div class="search-bar-wrapper">
-        <input type="text" id="pokemon-search" placeholder="Pesquisar Pokémon (nome ou #id)...">
-        <button id="search-btn">Buscar</button>
+    <input type="text" id="pokemon-search" placeholder="Pesquisar Pokémon (nome ou #id)...">
+    <button id="search-btn">Buscar</button>
+    
+    <div id="autocomplete-results">
+        </div>
+        
     </div>
 
     <div class="pokemon-grid-large">
@@ -43,8 +47,8 @@
         {% endif %}
 
         {% set pages_to_show = 5 %}
-        {% set start_page = (page - pages_to_show // 2)|max(1) %}
-        {% set end_page = (start_page + pages_to_show - 1)|min(total_pages) %}
+        {% set start_page = [1, page - pages_to_show // 2] | max %}
+        {% set end_page = [total_pages, start_page + pages_to_show - 1] | min %}
         
         {% if start_page > 1 %}
             <a href="{{ url_for('pokedex', page=1) }}" class="page-num">1</a>
@@ -76,25 +80,105 @@
 </div>
 
 <script>
-    document.querySelectorAll('.pokemon-card-large').forEach(card => {
-        card.addEventListener('click', () => {
-            window.location.href = card.dataset.url;
+    const searchInput = document.getElementById('pokemon-search');
+    const searchBtn = document.getElementById('search-btn');
+    const resultsContainer = document.getElementById('autocomplete-results');
+    let searchTimeout;
+
+    async function fetchAutocomplete(query) {
+        if (query.length < 2) {
+            resultsContainer.style.display = 'none';
+            return;
+        }
+
+        const apiUrl = `/api/search_pokemon?query=${query}`; 
+
+        try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                resultsContainer.style.display = 'none';
+                return;
+            }
+            const data = await response.json();
+            renderResults(data);
+        } catch (error) {
+            resultsContainer.style.display = 'none';
+        }
+    }
+
+    function renderResults(pokemons) {
+        resultsContainer.innerHTML = '';
+        
+        if (pokemons.length === 0) {
+            resultsContainer.innerHTML = '<div class="autocomplete-item" style="cursor: default; color: #aaa;">Nenhum Pokémon encontrado.</div>';
+            resultsContainer.style.display = 'block';
+            return;
+        }
+
+        pokemons.forEach(pokemon => {
+            const item = document.createElement('div');
+            item.className = 'autocomplete-item';
+            item.setAttribute('data-name', pokemon.name); 
+            
+            const pokemonId = pokemon.id; 
+            const imgUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`;
+
+            item.innerHTML = `
+                <img src="${imgUrl}" alt="${pokemon.name}">
+                <div class="autocomplete-info">
+                    <span class="name">${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</span>
+                    <span class="id">#${pokemonId}</span>
+                </div>
+            `;
+            
+            item.addEventListener('click', () => {
+                window.location.href = `/pokemon/${pokemon.name}`;
+            });
+
+            resultsContainer.appendChild(item);
         });
+
+        resultsContainer.style.display = 'block';
+    }
+
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        const query = e.target.value.toLowerCase().trim();
+        
+        if (query.length === 0) {
+            resultsContainer.style.display = 'none';
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            fetchAutocomplete(query);
+        }, 300);
     });
 
-  
-    document.getElementById('search-btn').addEventListener('click', handleSearch);
-    document.getElementById('pokemon-search').addEventListener('keypress', (e) => {
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-bar-wrapper')) {
+            resultsContainer.style.display = 'none';
+        }
+    });
+
+    searchBtn.addEventListener('click', handleSearch);
+    searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             handleSearch();
         }
     });
 
     function handleSearch() {
-        const input = document.getElementById('pokemon-search').value.toLowerCase().trim();
+        const input = searchInput.value.toLowerCase().trim();
         if (input) {
             window.location.href = `/pokemon/${input}`;
         }
     }
+
+    document.querySelectorAll('.pokemon-card-large').forEach(card => {
+        card.addEventListener('click', () => {
+            window.location.href = card.dataset.url;
+        });
+    });
 </script>
 {% endblock %}
