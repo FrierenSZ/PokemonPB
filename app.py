@@ -18,7 +18,7 @@ from services.gemini import get_pokemon_agent_response
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode='gevent')
 
 @app.route('/')
 def index():
